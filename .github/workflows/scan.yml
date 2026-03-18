@@ -37,6 +37,8 @@ jobs:
           command: cves
           image: ${{ github.event.inputs.docker_image }}
           sarif-file: sca_scout.sarif
+          dockerhub-user: ${{ secrets.DOCKERHUB_USERNAME }}
+          dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Upload SARIF file as artifact
         uses: actions/upload-artifact@v4
