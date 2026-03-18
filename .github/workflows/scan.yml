@@ -1,0 +1,51 @@
+name: SBOM/SCA Scout
+
+on:
+  workflow_dispatch:
+    inputs:
+      docker_image:
+        description: 'The Docker image to scan'
+        required: true
+        default: 'ghcr.io/christos-vasileiadis/info-sec-docker-scout:latest'
+
+jobs:
+  scout:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      packages: write
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull the image
+        run: docker pull ${{ github.event.inputs.docker_image }}
+
+      - name: Docker Scout
+        uses: docker/scout-action@v1
+        with:
+          command: cves
+          image: ${{ github.event.inputs.docker_image }}
+          sarif-file: sca_scout.sarif
+
+      - name: Upload SARIF file as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sca_scout.sarif
+          path: sca_scout.sarif
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: sca_scout.sarif
+          category: Security/SCA
